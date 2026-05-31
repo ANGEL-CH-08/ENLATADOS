@@ -1,0 +1,274 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Enlatados MG - Carga Masiva CSV</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+body { background: #f5f6fa; min-height: 100vh; }
+.header { background: #1a237e; color: white; padding: 18px 32px; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 20px; }
+.header-right { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+.btn-salir { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; }
+.btn-salir:hover { background: rgba(255,255,255,0.3); }
+.contenido { max-width: 900px; margin: 0 auto; padding: 30px 20px; }
+.titulo-pagina { color: #1a237e; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+.subtitulo-pagina { color: #777; font-size: 14px; margin-bottom: 28px; }
+.tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.tab { padding: 10px 20px; border-radius: 10px; border: 2px solid transparent; cursor: pointer; font-size: 14px; font-weight: 600; background: white; color: #666; transition: all 0.2s; }
+.tab:hover { border-color: #1a237e; color: #1a237e; }
+.tab.activo { background: #1a237e; color: white; border-color: #1a237e; }
+.panel { display: none; } .panel.activo { display: block; }
+.card { background: white; border-radius: 14px; padding: 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.formato-box { background: #e8eaf6; border-left: 4px solid #1a237e; border-radius: 0 8px 8px 0; padding: 14px 18px; margin-bottom: 22px; }
+.formato-box h3 { color: #1a237e; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.formato-box code { font-family: 'Courier New', monospace; font-size: 12px; color: #333; display: block; margin-bottom: 4px; background: white; padding: 6px 10px; border-radius: 6px; }
+.formato-box .notas { font-size: 12px; color: #555; margin-top: 10px; line-height: 1.7; }
+.zona-drop { border: 2.5px dashed #b0bec5; border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 18px; }
+.zona-drop:hover, .zona-drop.arrastrando { border-color: #1a237e; background: #e8eaf6; }
+.zona-drop .icono { font-size: 40px; margin-bottom: 12px; }
+.zona-drop p { color: #666; font-size: 14px; }
+.zona-drop span { color: #1a237e; font-weight: 700; }
+.archivo-sel { background: #e8f5e9; border: 2px solid #2e7d32; border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.archivo-sel span { font-size: 13px; color: #2e7d32; font-weight: 600; flex: 1; }
+.archivo-sel button { background: none; border: none; color: #c62828; cursor: pointer; font-size: 18px; }
+input[type=file] { display: none; }
+.btn-cargar { width: 100%; padding: 14px; background: #1a237e; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+.btn-cargar:hover { background: #283593; }
+.btn-cargar:disabled { background: #9fa8da; cursor: not-allowed; }
+.resultado { border-radius: 10px; overflow: hidden; margin-top: 20px; border: 1px solid #e0e0e0; }
+.res-header { padding: 14px 18px; font-weight: 700; font-size: 14px; }
+.res-ok { background: #e8f5e9; color: #2e7d32; }
+.res-warn { background: #fff3e0; color: #e65100; }
+.res-error { background: #ffebee; color: #c62828; }
+.res-body { padding: 14px 18px; }
+.res-seccion { margin-bottom: 12px; }
+.res-seccion h4 { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+.res-seccion ul { list-style: none; padding: 0; }
+.res-seccion ul li { font-size: 12px; padding: 3px 0; border-bottom: 0.5px solid #f0f0f0; color: #333; }
+.res-seccion ul li.err { color: #c62828; }
+.loader { display: none; text-align: center; padding: 20px; color: #1a237e; font-size: 14px; font-weight: 600; }
+.loader::before { content: '⏳ '; }
+.volver { display: inline-flex; align-items: center; gap: 6px; color: #1a237e; font-size: 13px; font-weight: 600; text-decoration: none; margin-bottom: 20px; }
+.volver:hover { text-decoration: underline; }
+</style>
+</head><body>
+<div class="header">
+  <h1>🥫 Enlatados MG</h1>
+  <div class="header-right">
+    <span id="nombreUsuario">Usuario</span>
+    <button class="btn-salir" onclick="cerrarSesion()">Cerrar Sesion</button>
+  </div>
+</div>
+
+<div class="contenido">
+  <a class="volver" href="/menu.html">← Volver al menu</a>
+  <div class="titulo-pagina">📥 Carga Masiva por CSV</div>
+  <div class="subtitulo-pagina">Carga multiples registros a la vez subiendo un archivo .csv con separador punto y coma (;)</div>
+
+  <div class="tabs">
+    <button class="tab activo" onclick="cambiarTab('usuarios')">👤 Usuarios</button>
+    <button class="tab" onclick="cambiarTab('clientes')">👥 Clientes</button>
+    <button class="tab" onclick="cambiarTab('repartidores')">🚗 Repartidores</button>
+    <button class="tab" onclick="cambiarTab('vehiculos')">🚛 Vehiculos</button>
+  </div>
+
+  <div class="panel activo" id="panelUsuarios">
+    <div class="card">
+      <div class="formato-box">
+        <h3>Formato esperado del archivo CSV</h3>
+        <code>ID;Nombre;Apellido;Contrasena</code>
+        <code>1;Maria;Lopez;pass1234</code>
+        <code>2;Juan;Perez;clave5678</code>
+        <div class="notas">• Separador: punto y coma (;)<br>• La primera fila con encabezado es opcional<br>• El ID es referencia, el sistema asigna uno nuevo automaticamente<br>• Contrasena minimo 4 caracteres</div>
+      </div>
+      <div class="zona-drop" id="dropUsuarios" onclick="document.getElementById('fileUsuarios').click()" ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="soltar(event,'usuarios')">
+        <div class="icono">📂</div>
+        <p>Arrastra tu archivo aqui o <span>haz clic para buscar</span></p>
+        <p style="font-size:12px;color:#aaa;margin-top:6px">Solo archivos .csv o .txt</p>
+      </div>
+      <input type="file" id="fileUsuarios" accept=".csv,.txt" onchange="seleccionarArchivo(this,'usuarios')"/>
+      <div id="archivoUsuarios" style="display:none" class="archivo-sel">
+        <span id="nombreArchivoUsuarios"></span>
+        <button onclick="limpiar('usuarios')">✕</button>
+      </div>
+      <div class="loader" id="loaderUsuarios">Cargando registros...</div>
+      <button class="btn-cargar" id="btnUsuarios" onclick="subirCSV('usuarios')" disabled>⬆ Cargar al sistema</button>
+      <div id="resultadoUsuarios"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelClientes">
+    <div class="card">
+      <div class="formato-box">
+        <h3>Formato esperado del archivo CSV</h3>
+        <code>DPI;Nombre;Apellido;Telefono;Direccion</code>
+        <code>1234567890101;Ana;Gomez;55551234;Zona 5</code>
+        <code>9876543210987;Luis;Ramos;44449876;Zona 1</code>
+        <div class="notas">• Separador: punto y coma (;)<br>• La columna Direccion es opcional<br>• El DPI es la llave unica del cliente en el arbol AVL</div>
+      </div>
+      <div class="zona-drop" id="dropClientes" onclick="document.getElementById('fileClientes').click()" ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="soltar(event,'clientes')">
+        <div class="icono">📂</div>
+        <p>Arrastra tu archivo aqui o <span>haz clic para buscar</span></p>
+        <p style="font-size:12px;color:#aaa;margin-top:6px">Solo archivos .csv o .txt</p>
+      </div>
+      <input type="file" id="fileClientes" accept=".csv,.txt" onchange="seleccionarArchivo(this,'clientes')"/>
+      <div id="archivoClientes" style="display:none" class="archivo-sel">
+        <span id="nombreArchivoClientes"></span>
+        <button onclick="limpiar('clientes')">✕</button>
+      </div>
+      <div class="loader" id="loaderClientes">Cargando registros...</div>
+      <button class="btn-cargar" id="btnClientes" onclick="subirCSV('clientes')" disabled>⬆ Cargar al sistema</button>
+      <div id="resultadoClientes"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelRepartidores">
+    <div class="card">
+      <div class="formato-box">
+        <h3>Formato esperado del archivo CSV</h3>
+        <code>DPI;Nombre;Apellido;Licencia;Telefono</code>
+        <code>1111111110101;Carlos;Morales;A;55550001</code>
+        <code>2222222220202;Rosa;Lima;B;55550002</code>
+        <div class="notas">• Separador: punto y coma (;)<br>• Licencia: A, B, C o E segun el tipo<br>• El DPI es la llave unica del repartidor en la cola</div>
+      </div>
+      <div class="zona-drop" id="dropRepartidores" onclick="document.getElementById('fileRepartidores').click()" ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="soltar(event,'repartidores')">
+        <div class="icono">📂</div>
+        <p>Arrastra tu archivo aqui o <span>haz clic para buscar</span></p>
+        <p style="font-size:12px;color:#aaa;margin-top:6px">Solo archivos .csv o .txt</p>
+      </div>
+      <input type="file" id="fileRepartidores" accept=".csv,.txt" onchange="seleccionarArchivo(this,'repartidores')"/>
+      <div id="archivoRepartidores" style="display:none" class="archivo-sel">
+        <span id="nombreArchivoRepartidores"></span>
+        <button onclick="limpiar('repartidores')">✕</button>
+      </div>
+      <div class="loader" id="loaderRepartidores">Cargando registros...</div>
+      <button class="btn-cargar" id="btnRepartidores" onclick="subirCSV('repartidores')" disabled>⬆ Cargar al sistema</button>
+      <div id="resultadoRepartidores"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelVehiculos">
+    <div class="card">
+      <div class="formato-box">
+        <h3>Formato esperado del archivo CSV</h3>
+        <code>Placa;Marca;Modelo;Color;Año;Transmision;Capacidad</code>
+        <code>P001ABC;Toyota;Hilux;Blanco;2022;Manual;50</code>
+        <code>P002XYZ;Chevrolet;NHR;Azul;2020;Manual;40</code>
+        <div class="notas">• Separador: punto y coma (;)<br>• Capacidad = numero maximo de cajas<br>• La placa es la llave unica del vehiculo en la cola</div>
+      </div>
+      <div class="zona-drop" id="dropVehiculos" onclick="document.getElementById('fileVehiculos').click()" ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="soltar(event,'vehiculos')">
+        <div class="icono">📂</div>
+        <p>Arrastra tu archivo aqui o <span>haz clic para buscar</span></p>
+        <p style="font-size:12px;color:#aaa;margin-top:6px">Solo archivos .csv o .txt</p>
+      </div>
+      <input type="file" id="fileVehiculos" accept=".csv,.txt" onchange="seleccionarArchivo(this,'vehiculos')"/>
+      <div id="archivoVehiculos" style="display:none" class="archivo-sel">
+        <span id="nombreArchivoVehiculos"></span>
+        <button onclick="limpiar('vehiculos')">✕</button>
+      </div>
+      <div class="loader" id="loaderVehiculos">Cargando registros...</div>
+      <button class="btn-cargar" id="btnVehiculos" onclick="subirCSV('vehiculos')" disabled>⬆ Cargar al sistema</button>
+      <div id="resultadoVehiculos"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const usuario = JSON.parse(sessionStorage.getItem('usuario') || 'null');
+if (!usuario) window.location.href = '/index.html';
+else document.getElementById('nombreUsuario').textContent = usuario.nombre || 'Usuario';
+
+function cerrarSesion() { sessionStorage.removeItem('usuario'); window.location.href = '/index.html'; }
+
+const archivos = { usuarios: null, clientes: null, repartidores: null, vehiculos: null };
+
+function cambiarTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('activo'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('activo'));
+  event.target.classList.add('activo');
+  document.getElementById('panel' + cap(tab)).classList.add('activo');
+}
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function seleccionarArchivo(input, entidad) {
+  const f = input.files[0];
+  if (!f) return;
+  archivos[entidad] = f;
+  document.getElementById('nombreArchivo' + cap(entidad)).textContent = '📄 ' + f.name + '  (' + (f.size / 1024).toFixed(1) + ' KB)';
+  document.getElementById('archivo' + cap(entidad)).style.display = 'flex';
+  document.getElementById('btn' + cap(entidad)).disabled = false;
+  document.getElementById('resultado' + cap(entidad)).innerHTML = '';
+}
+
+function limpiar(entidad) {
+  archivos[entidad] = null;
+  document.getElementById('file' + cap(entidad)).value = '';
+  document.getElementById('archivo' + cap(entidad)).style.display = 'none';
+  document.getElementById('btn' + cap(entidad)).disabled = true;
+  document.getElementById('resultado' + cap(entidad)).innerHTML = '';
+}
+
+function dragOver(e, el) { e.preventDefault(); el.classList.add('arrastrando'); }
+function dragLeave(el) { el.classList.remove('arrastrando'); }
+function soltar(e, entidad) {
+  e.preventDefault();
+  document.getElementById('drop' + cap(entidad)).classList.remove('arrastrando');
+  const f = e.dataTransfer.files[0];
+  if (!f) return;
+  const dt = new DataTransfer();
+  dt.items.add(f);
+  const input = document.getElementById('file' + cap(entidad));
+  input.files = dt.files;
+  seleccionarArchivo(input, entidad);
+}
+
+async function subirCSV(entidad) {
+  const f = archivos[entidad];
+  if (!f) return;
+  const btn = document.getElementById('btn' + cap(entidad));
+  const loader = document.getElementById('loader' + cap(entidad));
+  btn.disabled = true;
+  loader.style.display = 'block';
+  document.getElementById('resultado' + cap(entidad)).innerHTML = '';
+  try {
+    const form = new FormData();
+    form.append('archivo', f);
+    const res = await fetch('/api/csv/' + entidad, { method: 'POST', body: form });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+    mostrarResultado(entidad, data);
+  } catch(e) {
+    document.getElementById('resultado' + cap(entidad)).innerHTML =
+      `<div class="resultado"><div class="res-header res-error">❌ Error: ${e.message}</div></div>`;
+  } finally {
+    btn.disabled = false;
+    loader.style.display = 'none';
+  }
+}
+
+function mostrarResultado(entidad, data) {
+  const tieneErrores = data.errores > 0;
+  const tieneCargados = data.cargados > 0;
+  let cls = tieneCargados && !tieneErrores ? 'res-ok' : tieneCargados ? 'res-warn' : 'res-error';
+  let hdr = tieneCargados && !tieneErrores
+    ? `✅ ${data.cargados} registros cargados correctamente`
+    : tieneCargados
+    ? `⚠️ ${data.cargados} cargados — ${data.errores} con error`
+    : `❌ No se pudo cargar ningun registro (${data.errores} errores)`;
+
+  let html = `<div class="resultado"><div class="res-header ${cls}">${hdr}</div><div class="res-body">`;
+
+  if (data.detalleCargados && data.detalleCargados.length) {
+    html += `<div class="res-seccion"><h4 style="color:#2e7d32">✔ Cargados:</h4><ul>`;
+    data.detalleCargados.forEach(d => html += `<li>✔ ${d}</li>`);
+    html += `</ul></div>`;
+  }
+  if (data.detalleErrores && data.detalleErrores.length) {
+    html += `<div class="res-seccion"><h4 style="color:#c62828">✗ Errores:</h4><ul>`;
+    data.detalleErrores.forEach(e => html += `<li class="err">✗ ${e}</li>`);
+    html += `</ul></div>`;
+  }
+  html += `</div></div>`;
+  document.getElementById('resultado' + cap(entidad)).innerHTML = html;
+}
+</script>
+</body></html>

@@ -50,7 +50,7 @@ public class PilotoService {
         Piloto p = dataStore.getColadePilotos().buscarPorCui(cui);
         if (p == null)
             throw new RuntimeException("No existe ningun piloto con el CUI: " + cui);
-        if (p.getEstado().equals("OCUPADO") && !"OCUPADO".equals(estado))
+        if ("OCUPADO".equals(p.getEstado()) && !"LIBRE".equals(estado))
             throw new RuntimeException("El piloto '" + p.obtenerNombreCompleto()
                 + "' esta OCUPADO con un pedido activo. Completa o cancela el pedido primero.");
         return dataStore.getColadePilotos().cambiarEstado(cui, estado);

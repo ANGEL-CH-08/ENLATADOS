@@ -28,7 +28,7 @@ public class ReporteController {
 
     @GetMapping("/usuarios")  public ResponseEntity<?> rUsuarios()  { return ResponseEntity.ok(Map.of("total",usuarioService.obtenerTodos().size(),"datos",usuarioService.obtenerTodos())); }
     @GetMapping("/clientes")  public ResponseEntity<?> rClientes()  { return ResponseEntity.ok(Map.of("total",clienteService.obtenerTodos().size(),"datos",clienteService.obtenerTodos())); }
-    @GetMapping("/inventario") public ResponseEntity<?> rInventario(){ return ResponseEntity.ok(Map.of("cajasDisponibles",almacenService.getClass(),"datos",almacenService.obtenerInventario())); }
+    @GetMapping("/inventario") public ResponseEntity<?> rInventario(){ return ResponseEntity.ok(Map.of("cajasDisponibles",almacenService.obtenerInventario().size(),"datos",almacenService.obtenerInventario())); }
     @GetMapping("/pilotos")   public ResponseEntity<?> rPilotos()   { return ResponseEntity.ok(Map.of("disponibles",pilotoService.getCantidad(),"datos",pilotoService.obtenerTodos())); }
     @GetMapping("/vehiculos") public ResponseEntity<?> rVehiculos() { return ResponseEntity.ok(Map.of("disponibles",vehiculoService.getCantidad(),"datos",vehiculoService.obtenerTodos())); }
     @GetMapping("/pedidos")   public ResponseEntity<?> rPedidos()   { return ResponseEntity.ok(Map.of("total",pedidoService.obtenerTodos().size(),"datos",pedidoService.obtenerTodos())); }

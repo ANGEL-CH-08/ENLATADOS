@@ -45,4 +45,20 @@ public class CsvController {
             .body(Map.of("error", "El archivo esta vacio."));
         return ResponseEntity.ok(csvService.cargarVehiculos(archivo));
     }
+
+    @PostMapping("/catalogo")
+    public ResponseEntity<Map<String, Object>> cargarCatalogo(
+            @RequestParam("archivo") MultipartFile archivo) {
+        if (archivo.isEmpty()) return ResponseEntity.badRequest()
+            .body(Map.of("error", "El archivo esta vacio."));
+        return ResponseEntity.ok(csvService.cargarCatalogo(archivo));
+    }
+
+    @PostMapping("/productos-almacen")
+    public ResponseEntity<Map<String, Object>> cargarProductosAlmacen(
+            @RequestParam("archivo") MultipartFile archivo) {
+        if (archivo.isEmpty()) return ResponseEntity.badRequest()
+            .body(Map.of("error", "El archivo esta vacio."));
+        return ResponseEntity.ok(csvService.cargarProductosAlmacen(archivo));
+    }
 }

@@ -92,29 +92,23 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         const dot  = data.dot;
-
-        // Renderizar via quickchart.io — no requiere libreria local
-        const imgUrl = 'https://quickchart.io/graphviz?format=svg&graph=' + encodeURIComponent(dot);
-        const imgRes = await fetch(imgUrl);
-        if (!imgRes.ok) throw new Error('Servicio de graficos no disponible');
-        const svgText = await imgRes.text();
-        divG.innerHTML = svgText;
-        graficoCargado = true;
+        const img = document.createElement('img');
+        img.style.maxWidth = '100%';
+        img.style.height = 'auto';
+        img.onerror = function() {
+          divG.innerHTML = `<div style="width:100%">
+            <p style="color:#c62828;margin-bottom:8px">No se pudo renderizar. Pega el codigo en
+              <a href="https://dreampuf.github.io/GraphvizOnline/" target="_blank">GraphvizOnline</a>:
+            </p>
+            <textarea style="width:100%;height:260px;font-family:monospace;font-size:12px;padding:10px;border:2px solid #ddd;border-radius:8px" readonly>${dot}</textarea>
+          </div>`;
+        };
+        img.onload = function() { graficoCargado = true; };
+        img.src = 'https://quickchart.io/graphviz?format=png&graph=' + encodeURIComponent(dot);
+        divG.innerHTML = '';
+        divG.appendChild(img);
       } catch(e) {
-        // Fallback: mostrar DOT para copiar y pegar en graphviz online
-        try {
-          const r2 = await fetch(DOT_URL[tipoActual]);
-          const d2 = await r2.json();
-          divG.innerHTML = `
-            <div style="width:100%">
-              <p style="color:#c62828;margin-bottom:8px">No se pudo renderizar automaticamente. Copia el codigo y pegalo en
-                <a href="https://dreampuf.github.io/GraphvizOnline/" target="_blank">GraphvizOnline</a>:
-              </p>
-              <textarea style="width:100%;height:260px;font-family:monospace;font-size:12px;padding:10px;border:2px solid #ddd;border-radius:8px" readonly>${d2.dot||''}</textarea>
-            </div>`;
-        } catch(_) {
-          divG.innerHTML = '<div class="cargando" style="color:#c62828">Error al conectar con el servidor</div>';
-        }
+        divG.innerHTML = '<div class="cargando" style="color:#c62828">Error al conectar con el servidor</div>';
       }
     }
 </script>

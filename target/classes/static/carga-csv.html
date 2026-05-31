@@ -68,6 +68,8 @@ input[type=file] { display: none; }
     <button class="tab" onclick="cambiarTab('clientes')">👥 Clientes</button>
     <button class="tab" onclick="cambiarTab('repartidores')">🚗 Repartidores</button>
     <button class="tab" onclick="cambiarTab('vehiculos')">🚛 Vehiculos</button>
+    <button class="tab" onclick="cambiarTab('catalogo')">📦 Catalogo</button>
+    <button class="tab" onclick="cambiarTab('productosAlmacen')">🏭 Almacen</button>
   </div>
 
   <div class="panel activo" id="panelUsuarios">
@@ -169,6 +171,56 @@ input[type=file] { display: none; }
       <div id="resultadoVehiculos"></div>
     </div>
   </div>
+
+  <div class="panel" id="panelCatalogo">
+    <div class="card">
+      <div class="formato-box">
+        <h3>Formato esperado del archivo CSV</h3>
+        <code>codigo;nombre;descripcion;pesoKg;unidadesPorCaja;precioUnitario</code>
+        <code>FRIJOL-001;Frijoles Negros;Caja de frijoles negros;10.5;24;85.00</code>
+        <code>ATUN-001;Atun en Agua;Atun en agua 140g;8.4;48;120.00</code>
+        <div class="notas">• Separador: punto y coma (;)<br>• Peso en kilogramos por caja<br>• Precio unitario en Quetzales<br>• El codigo debe ser unico en el catalogo</div>
+      </div>
+      <div class="zona-drop" id="dropCatalogo" onclick="document.getElementById('fileCatalogo').click()" ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="soltar(event,'catalogo')">
+        <div class="icono">📂</div>
+        <p>Arrastra tu archivo aqui o <span>haz clic para buscar</span></p>
+        <p style="font-size:12px;color:#aaa;margin-top:6px">Solo archivos .csv o .txt</p>
+      </div>
+      <input type="file" id="fileCatalogo" accept=".csv,.txt" onchange="seleccionarArchivo(this,'catalogo')"/>
+      <div id="archivoCatalogo" style="display:none" class="archivo-sel">
+        <span id="nombreArchivoCatalogo"></span>
+        <button onclick="limpiar('catalogo')">✕</button>
+      </div>
+      <div class="loader" id="loaderCatalogo">Cargando registros...</div>
+      <button class="btn-cargar" id="btnCatalogo" onclick="subirCSV('catalogo')" disabled>⬆ Cargar al sistema</button>
+      <div id="resultadoCatalogo"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panelProductosAlmacen">
+    <div class="card">
+      <div class="formato-box">
+        <h3>Formato esperado del archivo CSV</h3>
+        <code>codigoProducto;cantidadCajas;zona;pasillo;estante;nivel</code>
+        <code>FRIJOL-001;20;A;1;2;3</code>
+        <code>ATUN-001;15;B;2;1;1</code>
+        <div class="notas">• Separador: punto y coma (;)<br>• El producto debe existir en el catalogo primero<br>• Zona: letra (A, B, C...)<br>• Pasillo, estante y nivel: numeros enteros</div>
+      </div>
+      <div class="zona-drop" id="dropProductosAlmacen" onclick="document.getElementById('fileProductosAlmacen').click()" ondragover="dragOver(event,this)" ondragleave="dragLeave(this)" ondrop="soltar(event,'productosAlmacen')">
+        <div class="icono">📂</div>
+        <p>Arrastra tu archivo aqui o <span>haz clic para buscar</span></p>
+        <p style="font-size:12px;color:#aaa;margin-top:6px">Solo archivos .csv o .txt</p>
+      </div>
+      <input type="file" id="fileProductosAlmacen" accept=".csv,.txt" onchange="seleccionarArchivo(this,'productosAlmacen')"/>
+      <div id="archivoProductosAlmacen" style="display:none" class="archivo-sel">
+        <span id="nombreArchivoProductosAlmacen"></span>
+        <button onclick="limpiar('productosAlmacen')">✕</button>
+      </div>
+      <div class="loader" id="loaderProductosAlmacen">Cargando registros...</div>
+      <button class="btn-cargar" id="btnProductosAlmacen" onclick="subirCSV('productosAlmacen')" disabled>⬆ Cargar al sistema</button>
+      <div id="resultadoProductosAlmacen"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -178,7 +230,7 @@ else document.getElementById('nombreUsuario').textContent = usuario.nombre || 'U
 
 function cerrarSesion() { sessionStorage.removeItem('usuario'); window.location.href = '/index.html'; }
 
-const archivos = { usuarios: null, clientes: null, repartidores: null, vehiculos: null };
+const archivos = { usuarios: null, clientes: null, repartidores: null, vehiculos: null, catalogo: null, productosAlmacen: null };
 
 function cambiarTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('activo'));
@@ -232,7 +284,8 @@ async function subirCSV(entidad) {
   try {
     const form = new FormData();
     form.append('archivo', f);
-    const res = await fetch('/api/csv/' + entidad, { method: 'POST', body: form });
+    const endpoint = entidad === 'productosAlmacen' ? 'productos-almacen' : entidad;
+    const res = await fetch('/api/csv/' + endpoint, { method: 'POST', body: form });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Error del servidor');
     mostrarResultado(entidad, data);

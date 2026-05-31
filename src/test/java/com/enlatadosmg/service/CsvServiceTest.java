@@ -17,13 +17,15 @@ public class CsvServiceTest {
     @Mock private ClienteService  clienteService;
     @Mock private PilotoService   pilotoService;
     @Mock private VehiculoService vehiculoService;
+    @Mock private CatalogoService catalogoService;
+    @Mock private AlmacenService  almacenService;
 
     private CsvService csvService;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        csvService = new CsvService(usuarioService, clienteService, pilotoService, vehiculoService);
+        csvService = new CsvService(usuarioService, clienteService, pilotoService, vehiculoService, catalogoService, almacenService);
     }
 
     @Test
